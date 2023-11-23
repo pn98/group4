@@ -1,5 +1,8 @@
 package model;
 
+import java.time.LocalDateTime;
+import java.util.List;
+
 public class Credential {
     private String emailOrUsername;
     private String password;
