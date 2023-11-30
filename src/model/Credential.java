@@ -11,5 +11,56 @@ public class Credential {
     private boolean isFavorite;
     private LocalDateTime lastAccessed;
 
+    public Credential(String mail, String password, String s) {
+    }
+
     // Constructors, getters, setters
+
+    public String getEmailOrUsername() {
+        return emailOrUsername;
+    }
+
+    public void setEmailOrUsername(String emailOrUsername) {
+        this.emailOrUsername = emailOrUsername;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
+    public String getWebsite() {
+        return website;
+    }
+
+    public void setWebsite(String website) {
+        this.website = website;
+    }
+
+    public List<String> getTags() {
+        return tags;
+    }
+
+    public void setTags(List<String> tags) {
+        this.tags = tags;
+    }
+
+    public boolean isFavorite() {
+        return isFavorite;
+    }
+
+    public void setFavorite(boolean favorite) {
+        isFavorite = favorite;
+    }
+
+    public LocalDateTime getLastAccessed() {
+        return lastAccessed;
+    }
+
+    public void setLastAccessed(LocalDateTime lastAccessed) {
+        this.lastAccessed = lastAccessed;
+    }
 }
