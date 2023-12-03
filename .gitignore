@@ -32,3 +32,8 @@ group4.iml
 build/
 .gradle/
 credentials.json
+gradle/wrapper/
+
+gradlew
+
+gradlew.bat
