@@ -11,7 +11,8 @@ public class Credential {
     private boolean isFavorite;
     private LocalDateTime lastAccessed;
 
-    // Constructors, getters, setters
+    public Credential() {
+    }
 
     public Credential(String emailOrUsername, String password, String website) {
         this.emailOrUsername = emailOrUsername;

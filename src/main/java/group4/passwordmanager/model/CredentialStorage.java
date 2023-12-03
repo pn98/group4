@@ -1,9 +1,26 @@
 package group4.passwordmanager.model;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
 public class CredentialStorage {
-    private final List<Credential> credentials = new ArrayList<>();
+    private final List<Credential> credentials;
+    private final ObjectMapper objectMapper;
+    private final File file;
+
+    public CredentialStorage(String filename) {
+        this.file = new File(filename);
+        this.credentials = new ArrayList<>();
+        this.objectMapper = new ObjectMapper();
+        this.objectMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
+        this.objectMapper.enable(SerializationFeature.INDENT_OUTPUT);
+
+        loadCredentials();
+    }
 
     public Credential retrieveByEmail(String emailOrUsername) {
         return credentials.stream()
@@ -13,15 +30,54 @@ public class CredentialStorage {
     }
 
     public void update(Credential credential) {
-        System.out.println("Updating credential for: " + credential.getEmailOrUsername());
+        for (int i = 0; i < credentials.size(); i++) {
+            if (credentials.get(i).getEmailOrUsername().equals(credential.getEmailOrUsername())) {
+                credentials.set(i, credential);
+                saveCredentials();
+                break;
+            }
+        }
     }
-
 
     public void store(Credential credential) {
-        credentials.add(credential);
+        // Check if the credential already exists
+        boolean exists = credentials.stream()
+                .anyMatch(c -> c.getEmailOrUsername().equals(credential.getEmailOrUsername()));
+        if (!exists) {
+            credentials.add(credential);
+        } else {
+            // If the credential exists, update it
+            for (int i = 0; i < credentials.size(); i++) {
+                if (credentials.get(i).getEmailOrUsername().equals(credential.getEmailOrUsername())) {
+                    credentials.set(i, credential);
+                    break;
+                }
+            }
+        }
+        saveCredentials();
     }
+
 
     public List<Credential> getAllCredentials() {
         return credentials;
+    }
+
+    private void loadCredentials() {
+        if (file.exists() && !file.isDirectory()) {
+            try {
+                List<Credential> loadedCredentials = objectMapper.readValue(file, new TypeReference<List<Credential>>(){});
+                credentials.addAll(loadedCredentials);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    public void saveCredentials() {
+        try {
+            objectMapper.writeValue(file, credentials);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 }

@@ -13,7 +13,7 @@ public class CredentialManager {
     private AccessHistoryTracker accessHistoryTracker;
 
     public CredentialManager() {
-        this.storage = new CredentialStorage();
+        this.storage = new CredentialStorage("credentials.json");
         this.passwordGenerator = new PasswordGenerator();
         this.tagManager = new TagManager();
         this.favoritesManager = new FavoritesManager();
