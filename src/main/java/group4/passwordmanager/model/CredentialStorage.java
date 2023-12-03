@@ -22,13 +22,6 @@ public class CredentialStorage {
         loadCredentials();
     }
 
-    public Credential retrieveByEmail(String emailOrUsername) {
-        return credentials.stream()
-                .filter(cred -> emailOrUsername.equals(cred.getEmailOrUsername()))
-                .findFirst()
-                .orElse(null);
-    }
-
     public void update(Credential credential) {
         for (int i = 0; i < credentials.size(); i++) {
             if (credentials.get(i).getEmailOrUsername().equals(credential.getEmailOrUsername())) {
@@ -56,7 +49,6 @@ public class CredentialStorage {
         }
         saveCredentials();
     }
-
 
     public List<Credential> getAllCredentials() {
         return credentials;

@@ -3,6 +3,8 @@ package group4.passwordmanager.service;
 import group4.passwordmanager.model.Credential;
 import group4.passwordmanager.model.CredentialStorage;
 
+import java.util.List;
+
 public class CredentialService {
 
     private final CredentialStorage storage;
@@ -11,32 +13,39 @@ public class CredentialService {
         this.storage = storage;
     }
 
+    public List<Credential> getAllCredentials() {
+        return storage.getAllCredentials();
+    }
+
+    public Credential getCredentialByIndex(int index) {
+        List<Credential> credentials = getAllCredentials();
+        if (index >= 0 && index < credentials.size()) {
+            return credentials.get(index);
+        }
+        return null;
+    }
+
     public void addCredential(Credential credential) {
         // Logic to add a credential
         storage.store(credential);
     }
 
-    public Credential retrieveCredential(String emailOrUsername) {
-        // Logic to retrieve a credential
-        return storage.retrieveByEmail(emailOrUsername);
-    }
+    public void editCredential(int index, String newEmailOrUsername, String newPassword, String newWebsite) {
+        List<Credential> credentials = storage.getAllCredentials();
+        if (index >= 0 && index < credentials.size()) {
+            Credential credential = credentials.get(index);
 
-    public void editPassword(String emailOrUsername, String newPassword) {
-        // Logic to edit a credential's password
-        Credential credential = storage.retrieveByEmail(emailOrUsername);
-        if (credential != null) {
-            credential.setPassword(newPassword);
+            if (!newEmailOrUsername.isEmpty()) {
+                credential.setEmailOrUsername(newEmailOrUsername);
+            }
+            if (!newPassword.isEmpty()) {
+                credential.setPassword(newPassword);
+            }
+            if (!newWebsite.isEmpty()) {
+                credential.setWebsite(newWebsite);
+            }
+
             storage.update(credential);
         }
     }
-
-    public void associateWebsite(String emailOrUsername, String website) {
-        // Logic to associate a website with a credential
-        Credential credential = storage.retrieveByEmail(emailOrUsername);
-        if (credential != null) {
-            credential.setWebsite(website);
-            storage.update(credential);
-        }
-    }
-
 }
