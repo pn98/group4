@@ -3,6 +3,7 @@ package group4.passwordmanager.service;
 import group4.passwordmanager.model.Credential;
 import group4.passwordmanager.model.CredentialStorage;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class CredentialService {
@@ -48,4 +49,24 @@ public class CredentialService {
             storage.update(credential);
         }
     }
+
+    public void updateCredential(Credential credential) {
+        storage.update(credential);
+    }
+
+    public List<Credential> searchCredentials(String searchTerm) {
+        List<Credential> matchingCredentials = new ArrayList<>();
+
+        // Retrieve all credentials from the storage
+        List<Credential> credentials = getAllCredentials();
+
+        for (Credential credential : credentials) {
+            if (credential.getEmailOrUsername().contains(searchTerm) || credential.getWebsite().contains(searchTerm)) {
+                matchingCredentials.add(credential);
+            }
+        }
+
+        return matchingCredentials;
+    }
+
 }

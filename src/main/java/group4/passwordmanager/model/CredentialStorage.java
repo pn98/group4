@@ -2,6 +2,8 @@ package group4.passwordmanager.model;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -18,6 +20,7 @@ public class CredentialStorage {
         this.objectMapper = new ObjectMapper();
         this.objectMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
         this.objectMapper.enable(SerializationFeature.INDENT_OUTPUT);
+        this.objectMapper.registerModule(new JavaTimeModule());
 
         loadCredentials();
     }
