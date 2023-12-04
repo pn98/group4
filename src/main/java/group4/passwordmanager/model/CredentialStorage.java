@@ -63,7 +63,7 @@ public class CredentialStorage {
                 List<Credential> loadedCredentials = objectMapper.readValue(file, new TypeReference<List<Credential>>(){});
                 credentials.addAll(loadedCredentials);
             } catch (IOException e) {
-                e.printStackTrace();
+                System.err.println("Error loading credentials: " + e.getMessage());
             }
         }
     }
@@ -72,7 +72,7 @@ public class CredentialStorage {
         try {
             objectMapper.writeValue(file, credentials);
         } catch (IOException e) {
-            e.printStackTrace();
+            System.err.println("Error saving credentials: " + e.getMessage());
         }
     }
 }
