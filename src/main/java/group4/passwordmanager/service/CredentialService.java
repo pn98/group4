@@ -54,19 +54,6 @@ public class CredentialService {
         storage.update(credential);
     }
 
-    public List<Credential> searchCredentials(String searchTerm) {
-        List<Credential> matchingCredentials = new ArrayList<>();
 
-        // Retrieve all credentials from the storage
-        List<Credential> credentials = getAllCredentials();
-
-        for (Credential credential : credentials) {
-            if (credential.getEmailOrUsername().contains(searchTerm) || credential.getWebsite().contains(searchTerm)) {
-                matchingCredentials.add(credential);
-            }
-        }
-
-        return matchingCredentials;
-    }
 
 }

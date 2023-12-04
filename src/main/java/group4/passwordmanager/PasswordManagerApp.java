@@ -4,6 +4,8 @@ import group4.passwordmanager.model.Credential;
 import group4.passwordmanager.model.CredentialStorage;
 import group4.passwordmanager.service.CredentialService;
 import group4.passwordmanager.service.PasswordGenerator;
+import group4.passwordmanager.service.SearchService;
+
 import static group4.passwordmanager.service.SearchService.viewPasswordOnly;
 
 import java.util.Scanner;
@@ -16,6 +18,7 @@ public class PasswordManagerApp {
         Scanner scanner = new Scanner(System.in);
         CredentialStorage storage = new CredentialStorage("credentials.json");
         CredentialService credentialService = new CredentialService(storage);
+        SearchService searchService = new SearchService(credentialService);
 
         while (true) {
             System.out.println("\nChoose an option: (search, list, create, view, edit, exit)");
@@ -29,7 +32,7 @@ public class PasswordManagerApp {
                         System.out.println("Please provide a search term (email or website).");
                     } else {
                         String searchTerm = parts[1];
-                        searchCredentials(scanner, credentialService, searchTerm);
+                        searchCredentials(scanner, searchService, searchTerm);
                     }
                     break;
                 case "list":
@@ -172,9 +175,9 @@ public class PasswordManagerApp {
         }
     }
 
-private static void searchCredentials(Scanner scanner, CredentialService credentialService, String searchTerm) {
+private static void searchCredentials(Scanner scanner, SearchService searchService, String searchTerm) {
     while (true) {
-        List<Credential> credentials = credentialService.searchCredentials(searchTerm.trim());
+        List<Credential> credentials = searchService.searchCredentials(searchTerm.trim());
 
         if (credentials.isEmpty()) {
             System.out.println("No matching credentials found.");
