@@ -11,7 +11,7 @@ import java.nio.file.Paths;
 import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 
-class AlexUserStoriesTest {
+class AlexSpecTest {
 
     private CredentialStorage storage;
     private CredentialService credentialService;
@@ -121,7 +121,6 @@ class AlexUserStoriesTest {
         assertTrue(storage.getAllCredentials().isEmpty());
     }
 
-
     @Test
     void saveCredentialsShouldWriteToFile() {
         storage.store(testCredential);
@@ -150,8 +149,6 @@ class AlexUserStoriesTest {
             unwritableDir.delete();
         }
     }
-
-
 
     @Test
     void getCredentialByIndexShouldReturnCorrectCredential() {
