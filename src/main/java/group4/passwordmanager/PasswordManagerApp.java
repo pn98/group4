@@ -1,13 +1,12 @@
 package group4.passwordmanager;
 
+import group4.passwordmanager.manager.TagManager;
 import group4.passwordmanager.model.Credential;
 import group4.passwordmanager.model.CredentialStorage;
 import group4.passwordmanager.service.AccessHistoryTracker;
 import group4.passwordmanager.service.CredentialService;
 import group4.passwordmanager.service.PasswordGenerator;
 import group4.passwordmanager.service.SearchService;
-
-import static group4.passwordmanager.service.SearchService.viewPasswordOnly;
 
 import java.util.Scanner;
 import java.util.List;
@@ -19,6 +18,7 @@ public class PasswordManagerApp {
         CredentialService credentialService = new CredentialService(storage);
         AccessHistoryTracker historyTracker = new AccessHistoryTracker(credentialService);
         SearchService searchService = new SearchService(credentialService);
+        TagManager tagManager = new TagManager(storage);
 
         while (true) {
             System.out.println("\nChoose an option: (search, list, create, view, edit, exit)");
@@ -29,7 +29,7 @@ public class PasswordManagerApp {
             switch (command.toLowerCase()) {
                 case "search":
                     if (parts.length < 2) {
-                        System.out.println("Please provide a search term (email or website).");
+                        System.out.println("Please provide a search term (email or website or tag).");
                     } else {
                         String searchTerm = parts[1];
                         searchCredentials(scanner, searchService, searchTerm);
@@ -39,7 +39,7 @@ public class PasswordManagerApp {
                     listCredentials(credentialService);
                     break;
                 case "create":
-                    createCredential(scanner, credentialService);
+                    createCredential(scanner, credentialService, tagManager);
                     break;
                 case "view":
                 case "edit":
@@ -50,7 +50,7 @@ public class PasswordManagerApp {
                         if (command.equals("view")) {
                             viewCredential(credentialService, index, historyTracker);
                         } else {
-                            editCredential(scanner, credentialService, index);
+                            editCredential(scanner, credentialService, tagManager, index);
                         }
                     }
                     break;
@@ -67,34 +67,25 @@ public class PasswordManagerApp {
         List<Credential> credentials = credentialService.getAllCredentials();
         for (int i = 0; i < credentials.size(); i++) {
             Credential credential = credentials.get(i);
-            System.out.println((i + 1) + ": Email/Username: " + credential.getEmailOrUsername() + ", Website: " + credential.getWebsite());
+            System.out.println((i + 1) + ": Email/Username: " + credential.getEmailOrUsername() + ", Website: " + credential.getWebsite() + ", Tags " + credential.getTags());
         }
     }
 
-    private static void createCredential(Scanner scanner, CredentialService credentialService) {
+    private static void createCredential(Scanner scanner, CredentialService credentialService, TagManager tagManager) {
         System.out.println("Enter Email or Username:");
         String emailOrUsername = scanner.nextLine();
 
-        System.out.println("Choose an option for password: (1) Enter your own password, (2) Generate a random password");
-        String passwordOption = scanner.nextLine();
-
-        String password;
-        if ("1".equals(passwordOption)) {
-            System.out.println("Enter Password:");
-            password = scanner.nextLine();
-        } else if ("2".equals(passwordOption)) {
-            password = PasswordGenerator.generateRandomPassword();
-            System.out.println("Generated Password: " + password);
-        } else {
-            System.out.println("Invalid option. Defaulting to your own password.");
-            System.out.println("Enter Password:");
-            password = scanner.nextLine();
-        }
+        // Call PasswordGenerator to enter password
+        String password = PasswordGenerator.enterPassword(scanner);
 
         System.out.println("Enter Website:");
         String website = scanner.nextLine();
 
+        // Call TagManager to enter tags
+        List<String> tags = tagManager.enterTags(scanner);
+
         Credential credential = new Credential(emailOrUsername, password, website);
+        credential.setTags(tags);
         credentialService.addCredential(credential);
 
         System.out.println("Credential added successfully.");
@@ -108,49 +99,32 @@ public class PasswordManagerApp {
             System.out.println("Email/Username: " + credential.getEmailOrUsername());
             System.out.println("Password: " + credential.getPassword());
             System.out.println("Website: " + credential.getWebsite());
-
             historyTracker.trackAccessHistory(credential);
+            System.out.println("Tags: " + credential.getTags());
 
         } else {
             System.out.println("Invalid index.");
         }
     }
 
-    private static void editCredential(Scanner scanner, CredentialService credentialService, int index) {
+    private static void editCredential(Scanner scanner, CredentialService credentialService, TagManager tagManager, int index) {
         index -= 1;
         Credential credential = credentialService.getCredentialByIndex(index);
         if (credential != null) {
             System.out.println("Editing Credential: " + credential.getEmailOrUsername());
             System.out.println("Current Password: " + credential.getPassword());
             System.out.println("Current Website: " + credential.getWebsite());
+            System.out.println("Current Tags: " + credential.getTags());
 
             System.out.println("Enter new Email/Username (leave blank to keep current):");
             String newEmailOrUsername = scanner.nextLine();
 
-            System.out.println("Do you want to change the password? (1) Yes, (2) No");
-            String changePasswordOption = scanner.nextLine();
-
-            String newPassword;
-            if ("1".equals(changePasswordOption)) {
-                System.out.println("Choose an option for password: (1) Enter your new password, (2) Generate a new random password");
-                String newPasswordOption = scanner.nextLine();
-
-                if ("1".equals(newPasswordOption)) {
-                    System.out.println("Enter New Password:");
-                    newPassword = scanner.nextLine();
-                } else if ("2".equals(newPasswordOption)) {
-                    newPassword = PasswordGenerator.generateRandomPassword();
-                    System.out.println("Generated Password: " + newPassword);
-                } else {
-                    System.out.println("Invalid option. Keeping the current password.");
-                    newPassword = credential.getPassword();
-                }
-            } else {
-                newPassword = credential.getPassword();
-            }
+            String newPassword = PasswordGenerator.editPassword(scanner, credential.getPassword());
 
             System.out.println("Enter new Website (leave blank to keep current):");
             String newWebsite = scanner.nextLine();
+
+            List<String> newTags = tagManager.editTags(scanner, credential.getTags());
 
             credentialService.editCredential(index, newEmailOrUsername, newPassword, newWebsite);
             System.out.println("Credential updated successfully.");
@@ -160,42 +134,7 @@ public class PasswordManagerApp {
         }
     }
 
-private static void searchCredentials(Scanner scanner, SearchService searchService, String searchTerm) {
-    while (true) {
-        List<Credential> credentials = searchService.searchCredentials(searchTerm.trim());
-
-        if (credentials.isEmpty()) {
-            System.out.println("No matching credentials found.");
-            return;
-        } else {
-            System.out.println("Matching credentials:");
-
-            for (int i = 0; i < credentials.size(); i++) {
-                Credential credential = credentials.get(i);
-                System.out.println((i + 1) + ": Email/Username: " + credential.getEmailOrUsername() + ", Website: " + credential.getWebsite());
-            }
-
-            System.out.println("Enter the number of the credential to view its details or 'back' to go back:");
-            String selection = scanner.nextLine();
-
-            if (selection.equalsIgnoreCase("back")) {
-                return;  // Go back to choosing an option
-            }
-
-            try {
-                int index = Integer.parseInt(selection);
-                if (index >= 1 && index <= credentials.size()) {
-                    viewPasswordOnly(credentials.get(index - 1));
-                } else {
-                    System.out.println("Invalid selection.");
-                }
-            } catch (NumberFormatException e) {
-                System.out.println("Invalid selection.");
-            }
-        }
+    private static void searchCredentials(Scanner scanner, SearchService searchService, String searchTerm) {
+        searchService.searchCredentialsAndPrintDetails(scanner, searchTerm);
     }
-}
-
-
-
 }
