@@ -2,6 +2,7 @@ package group4.passwordmanager;
 
 import group4.passwordmanager.model.Credential;
 import group4.passwordmanager.model.CredentialStorage;
+import group4.passwordmanager.service.AccessHistoryTracker;
 import group4.passwordmanager.service.CredentialService;
 import group4.passwordmanager.service.PasswordGenerator;
 import group4.passwordmanager.service.SearchService;
@@ -10,14 +11,13 @@ import static group4.passwordmanager.service.SearchService.viewPasswordOnly;
 
 import java.util.Scanner;
 import java.util.List;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 
 public class PasswordManagerApp {
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
         CredentialStorage storage = new CredentialStorage("credentials.json");
         CredentialService credentialService = new CredentialService(storage);
+        AccessHistoryTracker historyTracker = new AccessHistoryTracker(credentialService);
         SearchService searchService = new SearchService(credentialService);
 
         while (true) {
@@ -48,7 +48,7 @@ public class PasswordManagerApp {
                     } else {
                         int index = Integer.parseInt(parts[1]);
                         if (command.equals("view")) {
-                            viewCredential(credentialService, index);
+                            viewCredential(credentialService, index, historyTracker);
                         } else {
                             editCredential(scanner, credentialService, index);
                         }
@@ -100,7 +100,7 @@ public class PasswordManagerApp {
         System.out.println("Credential added successfully.");
     }
 
-    private static void viewCredential(CredentialService credentialService, int index) {
+    private static void viewCredential(CredentialService credentialService, int index, AccessHistoryTracker historyTracker) {
         index -= 1;
         Credential credential = credentialService.getCredentialByIndex(index);
         if (credential != null) {
@@ -109,22 +109,7 @@ public class PasswordManagerApp {
             System.out.println("Password: " + credential.getPassword());
             System.out.println("Website: " + credential.getWebsite());
 
-            LocalDateTime currentTimestamp = LocalDateTime.now();
-            LocalDateTime lastAccessed = credential.getLastAccessed();
-
-            if (lastAccessed == null) {
-                System.out.println("Last accessed: This is the first time it is accessed");
-                // Set the lastAccessed timestamp only if it's not already set
-            } else {
-                // Display the lastAccessed timestamp
-                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
-                String formattedTimestamp = lastAccessed.format(formatter);
-                System.out.println("Last accessed: " + formattedTimestamp);
-
-                // Update the lastAccessed timestamp to the current time
-                credential.setLastAccessed(currentTimestamp);
-                credentialService.updateCredential(credential);
-            }
+            historyTracker.trackAccessHistory(credential);
 
         } else {
             System.out.println("Invalid index.");
