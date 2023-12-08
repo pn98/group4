@@ -3,17 +3,22 @@ package group4.passwordmanager;
 import group4.passwordmanager.model.Credential;
 import group4.passwordmanager.model.CredentialStorage;
 import group4.passwordmanager.service.CredentialService;
+import group4.passwordmanager.service.LastModifiedService;
 import group4.passwordmanager.service.PasswordGenerator;
 import static group4.passwordmanager.service.SearchService.viewPasswordOnly;
 
-import java.util.Scanner;
 import java.util.List;
+import java.util.Scanner;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
 public class PasswordManagerApp {
+    private static Scanner scanner;
+    private static LocalDateTime lastViewedTime = null;
+    private static LocalDateTime lastEditedTime = null;
+
     public static void main(String[] args) {
-        Scanner scanner = new Scanner(System.in);
+        scanner = new Scanner(System.in);
         CredentialStorage storage = new CredentialStorage("credentials.json");
         CredentialService credentialService = new CredentialService(storage);
 
@@ -39,16 +44,19 @@ public class PasswordManagerApp {
                     createCredential(scanner, credentialService);
                     break;
                 case "view":
+                    if (parts.length < 2) {
+                        System.out.println("Please provide an index number.");
+                    } else {
+                        int index = Integer.parseInt(parts[1]);
+                        viewCredential(credentialService, index);
+                    }
+                    break;
                 case "edit":
                     if (parts.length < 2) {
                         System.out.println("Please provide an index number.");
                     } else {
                         int index = Integer.parseInt(parts[1]);
-                        if (command.equals("view")) {
-                            viewCredential(credentialService, index);
-                        } else {
-                            editCredential(scanner, credentialService, index);
-                        }
+                        editCredential(scanner, credentialService, index);
                     }
                     break;
                 case "exit":
@@ -106,23 +114,23 @@ public class PasswordManagerApp {
             System.out.println("Password: " + credential.getPassword());
             System.out.println("Website: " + credential.getWebsite());
 
-            LocalDateTime currentTimestamp = LocalDateTime.now();
-            LocalDateTime lastAccessed = credential.getLastAccessed();
+            // Update the last viewed timestamp to the current time
+            lastViewedTime = LocalDateTime.now();
 
-            if (lastAccessed == null) {
-                System.out.println("Last accessed: This is the first time it is accessed");
-                // Set the lastAccessed timestamp only if it's not already set
-            } else {
-                // Display the lastAccessed timestamp
+            if (lastViewedTime != null) {
                 DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
-                String formattedTimestamp = lastAccessed.format(formatter);
-                System.out.println("Last accessed: " + formattedTimestamp);
-
-                // Update the lastAccessed timestamp to the current time
-                credential.setLastAccessed(currentTimestamp);
-                credentialService.updateCredential(credential);
+                String formattedTimestamp = lastViewedTime.format(formatter);
+                System.out.println("Last viewed: " + formattedTimestamp);
             }
 
+            // Prompt user for edit
+            System.out.println("Enter 'edit' to modify this credential or 'back' to go back:");
+            String editOption = scanner.nextLine();
+
+            if (editOption.equalsIgnoreCase("edit")) {
+                // Call the editCredentialFields method to handle the editing logic
+                editCredential(scanner, credentialService, index);
+            }
         } else {
             System.out.println("Invalid index.");
         }
@@ -138,6 +146,9 @@ public class PasswordManagerApp {
 
             System.out.println("Enter new Email/Username (leave blank to keep current):");
             String newEmailOrUsername = scanner.nextLine();
+
+            // Update the last edited timestamp to the current time
+            lastEditedTime = LocalDateTime.now();
 
             System.out.println("Do you want to change the password? (1) Yes, (2) No");
             String changePasswordOption = scanner.nextLine();
@@ -157,6 +168,12 @@ public class PasswordManagerApp {
                     System.out.println("Invalid option. Keeping the current password.");
                     newPassword = credential.getPassword();
                 }
+
+                // Update the lastModified timestamp only if the password is modified
+                if (!newPassword.equals(credential.getPassword())) {
+                    credential.setLastModified(LocalDateTime.now());
+                }
+
             } else {
                 newPassword = credential.getPassword();
             }
@@ -172,42 +189,41 @@ public class PasswordManagerApp {
         }
     }
 
-private static void searchCredentials(Scanner scanner, CredentialService credentialService, String searchTerm) {
-    while (true) {
-        List<Credential> credentials = credentialService.searchCredentials(searchTerm.trim());
+    private static void searchCredentials(Scanner scanner, CredentialService credentialService, String searchTerm) {
+        while (true) {
+            List<Credential> credentials = credentialService.searchCredentials(searchTerm.trim());
 
-        if (credentials.isEmpty()) {
-            System.out.println("No matching credentials found.");
-            return;
-        } else {
-            System.out.println("Matching credentials:");
+            if (credentials.isEmpty()) {
+                System.out.println("No matching credentials found.");
+                return;
+            } else {
+                System.out.println("Matching credentials:");
 
-            for (int i = 0; i < credentials.size(); i++) {
-                Credential credential = credentials.get(i);
-                System.out.println((i + 1) + ": Email/Username: " + credential.getEmailOrUsername() + ", Website: " + credential.getWebsite());
-            }
+                for (int i = 0; i < credentials.size(); i++) {
+                    Credential credential = credentials.get(i);
+                    System.out.println((i + 1) + ": Email/Username: " + credential.getEmailOrUsername() + ", Website: " + credential.getWebsite());
+                }
 
-            System.out.println("Enter the number of the credential to view its details or 'back' to go back:");
-            String selection = scanner.nextLine();
+                System.out.println("Enter the number of the credential to view its details or 'back' to go back:");
+                String selection = scanner.nextLine();
 
-            if (selection.equalsIgnoreCase("back")) {
-                return;  // Go back to choosing an option
-            }
+                if (selection.equalsIgnoreCase("back")) {
+                    return;  // Go back to choosing an option
+                }
 
-            try {
-                int index = Integer.parseInt(selection);
-                if (index >= 1 && index <= credentials.size()) {
-                    viewPasswordOnly(credentials.get(index - 1));
-                } else {
+                try {
+                    int index = Integer.parseInt(selection);
+                    if (index >= 1 && index <= credentials.size()) {
+                        viewPasswordOnly(credentials.get(index - 1));
+                    } else {
+                        System.out.println("Invalid selection.");
+                    }
+                } catch (NumberFormatException e) {
                     System.out.println("Invalid selection.");
                 }
-            } catch (NumberFormatException e) {
-                System.out.println("Invalid selection.");
             }
         }
     }
 }
 
 
-
-}

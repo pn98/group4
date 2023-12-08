@@ -1,4 +1,5 @@
 package group4.passwordmanager.model;
+
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
@@ -16,6 +17,16 @@ public class CredentialStorage {
 
     public CredentialStorage(String filename) {
         this.file = new File(filename);
+
+        if (!file.exists()) {
+            try {
+                file.createNewFile();
+            } catch (IOException e) {
+                // Handle or log the exception appropriately
+                e.printStackTrace();
+            }
+        }
+
         this.credentials = new ArrayList<>();
         this.objectMapper = new ObjectMapper();
         this.objectMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
@@ -36,20 +47,8 @@ public class CredentialStorage {
     }
 
     public void store(Credential credential) {
-        // Check if the credential already exists
-        boolean exists = credentials.stream()
-                .anyMatch(c -> c.getEmailOrUsername().equals(credential.getEmailOrUsername()));
-        if (!exists) {
-            credentials.add(credential);
-        } else {
-            // If the credential exists, update it
-            for (int i = 0; i < credentials.size(); i++) {
-                if (credentials.get(i).getEmailOrUsername().equals(credential.getEmailOrUsername())) {
-                    credentials.set(i, credential);
-                    break;
-                }
-            }
-        }
+        boolean exists = credentials.removeIf(c -> c.getEmailOrUsername().equals(credential.getEmailOrUsername()));
+        credentials.add(credential);
         saveCredentials();
     }
 
@@ -60,9 +59,11 @@ public class CredentialStorage {
     private void loadCredentials() {
         if (file.exists() && !file.isDirectory()) {
             try {
-                List<Credential> loadedCredentials = objectMapper.readValue(file, new TypeReference<List<Credential>>(){});
+                List<Credential> loadedCredentials = objectMapper.readValue(file, new TypeReference<List<Credential>>() {
+                });
                 credentials.addAll(loadedCredentials);
             } catch (IOException e) {
+                // Handle or log the exception appropriately
                 e.printStackTrace();
             }
         }
@@ -72,6 +73,7 @@ public class CredentialStorage {
         try {
             objectMapper.writeValue(file, credentials);
         } catch (IOException e) {
+            // Handle or log the exception appropriately
             e.printStackTrace();
         }
     }

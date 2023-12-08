@@ -10,13 +10,7 @@ public class Credential {
     private List<String> tags;
     private boolean isFavorite;
     private LocalDateTime lastAccessed;
-
     private LocalDateTime lastModified;
-    private String helpForm;
-    private String resetPassword;
-    private String recommendedPassword;
-    private boolean emailInUse;
-    private boolean passwordStrength;
 
     public Credential() {
     }
@@ -81,45 +75,5 @@ public class Credential {
 
     public void setLastModified(LocalDateTime lastModified) {
         this.lastModified = lastModified;
-    }
-
-    public String getHelpForm() {
-        return helpForm;
-    }
-
-    public void setHelpForm(String helpForm) {
-        this.helpForm = helpForm;
-    }
-
-    public String getResetPassword() {
-        return resetPassword;
-    }
-
-    public void setResetPassword(String resetPassword) {
-        this.resetPassword = resetPassword;
-    }
-
-    public String getRecommendedPassword() {
-        return recommendedPassword;
-    }
-
-    public void setRecommendedPassword(String recommendedPassword) {
-        this.recommendedPassword = recommendedPassword;
-    }
-
-    public boolean isEmailInUse() {
-        return emailInUse;
-    }
-
-    public void setEmailInUse(boolean emailInUse) {
-        this.emailInUse = emailInUse;
-    }
-
-    public boolean isPasswordStrength() {
-        return passwordStrength;
-    }
-
-    public void setPasswordStrength(boolean passwordStrength) {
-        this.passwordStrength = passwordStrength;
     }
 }
