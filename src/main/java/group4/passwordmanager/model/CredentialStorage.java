@@ -22,7 +22,6 @@ public class CredentialStorage {
             try {
                 file.createNewFile();
             } catch (IOException e) {
-                // Handle or log the exception appropriately
                 e.printStackTrace();
             }
         }
@@ -63,7 +62,6 @@ public class CredentialStorage {
                 });
                 credentials.addAll(loadedCredentials);
             } catch (IOException e) {
-                // Handle or log the exception appropriately
                 e.printStackTrace();
             }
         }
@@ -73,7 +71,6 @@ public class CredentialStorage {
         try {
             objectMapper.writeValue(file, credentials);
         } catch (IOException e) {
-            // Handle or log the exception appropriately
             e.printStackTrace();
         }
     }

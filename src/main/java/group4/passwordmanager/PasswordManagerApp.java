@@ -125,12 +125,10 @@ public class PasswordManagerApp {
         Credential credential = credentialService.getCredentialByIndex(index);
 
         if (credential != null) {
-            // Display all details of the credential
             System.out.println("Email/Username: " + credential.getEmailOrUsername());
             System.out.println("Password: " + credential.getPassword());
             System.out.println("Website: " + credential.getWebsite());
 
-            // Update the last viewed timestamp to the current time
             lastViewedTime = LocalDateTime.now();
 
             if (lastViewedTime != null) {
@@ -139,13 +137,11 @@ public class PasswordManagerApp {
                 System.out.println("Last viewed: " + formattedTimestamp);
             }
 
-            // Check if the user has multiple accounts with the same email
             List<Credential> matchingCredentials = credentialService.getCredentialsByEmail(credential.getEmailOrUsername());
 
             if (matchingCredentials.size() > 1) {
                 System.out.println("User has other accounts with the same email:");
 
-                // Display other accounts
                 for (int i = 0; i < matchingCredentials.size(); i++) {
                     if (i != index) {
                         Credential otherCredential = matchingCredentials.get(i);
@@ -153,7 +149,6 @@ public class PasswordManagerApp {
                     }
                 }
 
-                // Allow the user to choose another account
                 boolean chooseAnother = true;
                 while (chooseAnother) {
                     System.out.println("Would you like to view another account? (Enter 'yes' or 'no')");
@@ -163,25 +158,20 @@ public class PasswordManagerApp {
                         System.out.println("Enter the number of the account to view:");
                         int otherIndex = Integer.parseInt(scanner.nextLine());
 
-                        // Update the current index
                         index = otherIndex - 1;
 
-                        // Display the chosen account
                         Credential chosenCredential = credentialService.getCredentialByIndex(index);
                         System.out.println("Email/Username: " + chosenCredential.getEmailOrUsername());
                         System.out.println("Password: " + chosenCredential.getPassword());
                         System.out.println("Website: " + chosenCredential.getWebsite());
 
-                        // Prompt user for edit
                         System.out.println("Enter 'edit' to modify this credential or 'back' to go back:");
                         String editOption = scanner.nextLine();
 
                         if (editOption.equalsIgnoreCase("edit")) {
-                            // Call the editCredentialFields method to handle the editing logic
                             editCredential(scanner, credentialService, index);
                         }
 
-                        // Prompt the user to choose another account
                         System.out.println("Would you like to view another account? (Enter 'yes' or 'no')");
                         response = scanner.nextLine();
                         chooseAnother = response.equalsIgnoreCase("yes");
@@ -190,12 +180,10 @@ public class PasswordManagerApp {
                     }
                 }
             } else {
-                // Prompt user for edit
                 System.out.println("Enter 'edit' to modify this credential or 'back' to go back:");
                 String editOption = scanner.nextLine();
 
                 if (editOption.equalsIgnoreCase("edit")) {
-                    // Call the editCredentialFields method to handle the editing logic
                     editCredential(scanner, credentialService, index);
                 }
             }
@@ -216,7 +204,6 @@ public class PasswordManagerApp {
             System.out.println("Enter new Email/Username (leave blank to keep current):");
             String newEmailOrUsername = scanner.nextLine();
 
-            // Update the last edited timestamp to the current time
             lastEditedTime = LocalDateTime.now();
 
             System.out.println("Do you want to change the password? (1) Yes, (2) No");
@@ -238,7 +225,6 @@ public class PasswordManagerApp {
                     newPassword = credential.getPassword();
                 }
 
-                // Update the lastModified timestamp only if the password is modified
                 if (!newPassword.equals(credential.getPassword())) {
                     credential.setLastModified(LocalDateTime.now());
                 }
