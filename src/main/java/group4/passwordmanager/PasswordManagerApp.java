@@ -115,6 +115,15 @@ public class PasswordManagerApp {
         System.out.println("Enter Email or Username:");
         String emailOrUsername = scanner.nextLine();
 
+        System.out.println("Enter Website:");
+        String website = scanner.nextLine();
+
+        // Check if the email/username is already in use for this website
+        if (credentialService.isCredentialExists(emailOrUsername, website)) {
+            System.out.println("Username/Email address already in use for this website. Please choose a different one.");
+            return;
+        }
+
         System.out.println("Choose an option for password: (1) Enter your own password, (2) Generate a random password");
         String passwordOption = scanner.nextLine();
 
@@ -131,14 +140,12 @@ public class PasswordManagerApp {
             password = scanner.nextLine();
         }
 
-        System.out.println("Enter Website:");
-        String website = scanner.nextLine();
-
         Credential credential = new Credential(emailOrUsername, password, website);
-        credentialService.addCredential(credential);
 
+        credentialService.addCredential(credential);
         System.out.println("Credential added successfully.");
     }
+
 
     private static void viewCredential(CredentialService credentialService, int index) {
         index -= 1;

@@ -117,4 +117,11 @@ public class CredentialService {
         return matchingCredentials;
     }
 
+    public boolean isCredentialExists(String emailOrUsername, String website) {
+        List<Credential> credentials = getAllCredentials();
+
+        return credentials.stream()
+                .anyMatch(c -> c.getEmailOrUsername().equalsIgnoreCase(emailOrUsername) && c.getWebsite().equalsIgnoreCase(website));
+    }
+
 }
