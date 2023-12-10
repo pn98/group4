@@ -83,13 +83,33 @@ public class PasswordManagerApp {
     private static void listCredentials(CredentialService credentialService) {
         List<Credential> credentials = credentialService.getAllCredentials();
 
-        credentials.sort((c1, c2) -> c1.getEmailOrUsername().compareToIgnoreCase(c2.getEmailOrUsername()));
+        credentials.sort((c1, c2) -> {
+            int websiteComparison = c1.getWebsite().compareToIgnoreCase(c2.getWebsite());
+            if (websiteComparison != 0) {
+                return websiteComparison;
+            }
+            return c1.getEmailOrUsername().compareToIgnoreCase(c2.getEmailOrUsername());
+        });
+
+        String currentWebsite = null;
 
         for (int i = 0; i < credentials.size(); i++) {
             Credential credential = credentials.get(i);
-            System.out.println((i + 1) + ": Email/Username: " + credential.getEmailOrUsername() + ", Website: " + credential.getWebsite());
+            String website = credential.getWebsite();
+
+            if (!website.equals(currentWebsite)) {
+                System.out.println("\nWebsite: " + website);
+                currentWebsite = website;
+            }
+
+            System.out.println((i + 1) + ": Email/Username: " + credential.getEmailOrUsername());
+
+            if (i == credentials.size() - 1 || !credentials.get(i + 1).getWebsite().equals(currentWebsite)) {
+                System.out.println();
+            }
         }
     }
+
 
     private static void createCredential(Scanner scanner, CredentialService credentialService) {
         System.out.println("Enter Email or Username:");
