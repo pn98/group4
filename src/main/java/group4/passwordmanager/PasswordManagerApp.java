@@ -3,9 +3,7 @@ package group4.passwordmanager;
 import group4.passwordmanager.model.Credential;
 import group4.passwordmanager.model.CredentialStorage;
 import group4.passwordmanager.service.CredentialService;
-import group4.passwordmanager.service.LastModifiedService;
 import group4.passwordmanager.service.PasswordGenerator;
-import static group4.passwordmanager.service.SearchService.viewPasswordOnly;
 
 import java.util.List;
 import java.util.Scanner;
@@ -23,7 +21,7 @@ public class PasswordManagerApp {
         CredentialService credentialService = new CredentialService(storage);
 
         while (true) {
-            System.out.println("\nChoose an option: (search, list, create, view, edit, exit)");
+            System.out.println("\nChoose an option: (search, list, create, view, edit, help, exit)");
             String option = scanner.nextLine();
             String[] parts = option.split(" ");
             String command = parts[0];
@@ -59,6 +57,9 @@ public class PasswordManagerApp {
                         editCredential(scanner, credentialService, index);
                     }
                     break;
+                case "help":
+                    printHelp();
+                    break;
                 case "exit":
                     System.out.println("Exiting...");
                     return;
@@ -68,8 +69,22 @@ public class PasswordManagerApp {
         }
     }
 
+    private static void printHelp() {
+        System.out.println("Available commands:");
+        System.out.println("  - search [term]: Search for credentials with the provided term (email or website).");
+        System.out.println("  - list: List all stored credentials.");
+        System.out.println("  - create: Create a new credential.");
+        System.out.println("  - view [index]: View the details of the credential at the specified index.");
+        System.out.println("  - edit [index]: Edit the credential at the specified index.");
+        System.out.println("  - help: Display this help message.");
+        System.out.println("  - exit: Exit the Password Manager.");
+    }
+
     private static void listCredentials(CredentialService credentialService) {
         List<Credential> credentials = credentialService.getAllCredentials();
+
+        credentials.sort((c1, c2) -> c1.getEmailOrUsername().compareToIgnoreCase(c2.getEmailOrUsername()));
+
         for (int i = 0; i < credentials.size(); i++) {
             Credential credential = credentials.get(i);
             System.out.println((i + 1) + ": Email/Username: " + credential.getEmailOrUsername() + ", Website: " + credential.getWebsite());
@@ -108,6 +123,7 @@ public class PasswordManagerApp {
     private static void viewCredential(CredentialService credentialService, int index) {
         index -= 1;
         Credential credential = credentialService.getCredentialByIndex(index);
+
         if (credential != null) {
             // Display all details of the credential
             System.out.println("Email/Username: " + credential.getEmailOrUsername());
@@ -123,13 +139,65 @@ public class PasswordManagerApp {
                 System.out.println("Last viewed: " + formattedTimestamp);
             }
 
-            // Prompt user for edit
-            System.out.println("Enter 'edit' to modify this credential or 'back' to go back:");
-            String editOption = scanner.nextLine();
+            // Check if the user has multiple accounts with the same email
+            List<Credential> matchingCredentials = credentialService.getCredentialsByEmail(credential.getEmailOrUsername());
 
-            if (editOption.equalsIgnoreCase("edit")) {
-                // Call the editCredentialFields method to handle the editing logic
-                editCredential(scanner, credentialService, index);
+            if (matchingCredentials.size() > 1) {
+                System.out.println("User has other accounts with the same email:");
+
+                // Display other accounts
+                for (int i = 0; i < matchingCredentials.size(); i++) {
+                    if (i != index) {
+                        Credential otherCredential = matchingCredentials.get(i);
+                        System.out.println((i + 1) + ": Website: " + otherCredential.getWebsite());
+                    }
+                }
+
+                // Allow the user to choose another account
+                boolean chooseAnother = true;
+                while (chooseAnother) {
+                    System.out.println("Would you like to view another account? (Enter 'yes' or 'no')");
+                    String response = scanner.nextLine();
+
+                    if (response.equalsIgnoreCase("yes")) {
+                        System.out.println("Enter the number of the account to view:");
+                        int otherIndex = Integer.parseInt(scanner.nextLine());
+
+                        // Update the current index
+                        index = otherIndex - 1;
+
+                        // Display the chosen account
+                        Credential chosenCredential = credentialService.getCredentialByIndex(index);
+                        System.out.println("Email/Username: " + chosenCredential.getEmailOrUsername());
+                        System.out.println("Password: " + chosenCredential.getPassword());
+                        System.out.println("Website: " + chosenCredential.getWebsite());
+
+                        // Prompt user for edit
+                        System.out.println("Enter 'edit' to modify this credential or 'back' to go back:");
+                        String editOption = scanner.nextLine();
+
+                        if (editOption.equalsIgnoreCase("edit")) {
+                            // Call the editCredentialFields method to handle the editing logic
+                            editCredential(scanner, credentialService, index);
+                        }
+
+                        // Prompt the user to choose another account
+                        System.out.println("Would you like to view another account? (Enter 'yes' or 'no')");
+                        response = scanner.nextLine();
+                        chooseAnother = response.equalsIgnoreCase("yes");
+                    } else {
+                        chooseAnother = false;
+                    }
+                }
+            } else {
+                // Prompt user for edit
+                System.out.println("Enter 'edit' to modify this credential or 'back' to go back:");
+                String editOption = scanner.nextLine();
+
+                if (editOption.equalsIgnoreCase("edit")) {
+                    // Call the editCredentialFields method to handle the editing logic
+                    editCredential(scanner, credentialService, index);
+                }
             }
         } else {
             System.out.println("Invalid index.");
@@ -139,6 +207,7 @@ public class PasswordManagerApp {
     private static void editCredential(Scanner scanner, CredentialService credentialService, int index) {
         index -= 1;
         Credential credential = credentialService.getCredentialByIndex(index);
+
         if (credential != null) {
             System.out.println("Editing Credential: " + credential.getEmailOrUsername());
             System.out.println("Current Password: " + credential.getPassword());
@@ -173,7 +242,6 @@ public class PasswordManagerApp {
                 if (!newPassword.equals(credential.getPassword())) {
                     credential.setLastModified(LocalDateTime.now());
                 }
-
             } else {
                 newPassword = credential.getPassword();
             }
@@ -183,7 +251,6 @@ public class PasswordManagerApp {
 
             credentialService.editCredential(index, newEmailOrUsername, newPassword, newWebsite);
             System.out.println("Credential updated successfully.");
-
         } else {
             System.out.println("Invalid index.");
         }
@@ -214,7 +281,7 @@ public class PasswordManagerApp {
                 try {
                     int index = Integer.parseInt(selection);
                     if (index >= 1 && index <= credentials.size()) {
-                        viewPasswordOnly(credentials.get(index - 1));
+                        viewCredential(credentialService, credentialService.getIndexByCredential(credentials.get(index - 1)));
                     } else {
                         System.out.println("Invalid selection.");
                     }
