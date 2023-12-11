@@ -13,7 +13,6 @@ import java.time.format.DateTimeFormatter;
 public class PasswordManagerApp {
     private static Scanner scanner;
     private static LocalDateTime lastViewedTime = null;
-    private static LocalDateTime lastEditedTime = null;
 
     public static void main(String[] args) {
         scanner = new Scanner(System.in);
@@ -118,7 +117,6 @@ public class PasswordManagerApp {
         System.out.println("Enter Website:");
         String website = scanner.nextLine();
 
-        // Check if the email/username is already in use for this website
         if (credentialService.isCredentialExists(emailOrUsername, website)) {
             System.out.println("Username/Email address already in use for this website. Please choose a different one.");
             return;
@@ -131,6 +129,37 @@ public class PasswordManagerApp {
         if ("1".equals(passwordOption)) {
             System.out.println("Enter Password:");
             password = scanner.nextLine();
+
+            if (isWeakPassword(password)) {
+                System.out.println("The entered password is weak. We recommend using a combination of letters, numbers, and symbols.");
+
+                String variant1 = password + "123";
+                String variant2 = "!" + password + "@";
+                String variant3 = password.toUpperCase();
+
+                System.out.println("Here are three password variants for you to consider:");
+                System.out.println("1. " + variant1);
+                System.out.println("2. " + variant2);
+                System.out.println("3. " + variant3);
+
+                System.out.println("Please choose one of the variants (1, 2, 3) or enter your own password:");
+
+                String variantChoice = scanner.nextLine();
+                switch (variantChoice) {
+                    case "1":
+                        password = variant1;
+                        break;
+                    case "2":
+                        password = variant2;
+                        break;
+                    case "3":
+                        password = variant3;
+                        break;
+                    default:
+                        System.out.println("Invalid choice. Using the entered password.");
+                        break;
+                }
+            }
         } else if ("2".equals(passwordOption)) {
             password = PasswordGenerator.generateRandomPassword();
             System.out.println("Generated Password: " + password);
@@ -145,6 +174,12 @@ public class PasswordManagerApp {
         credentialService.addCredential(credential);
         System.out.println("Credential added successfully.");
     }
+
+
+    private static boolean isWeakPassword(String password) {
+        return password.matches("[a-zA-Z]+");
+    }
+
 
 
     private static void viewCredential(CredentialService credentialService, int index) {
@@ -231,7 +266,7 @@ public class PasswordManagerApp {
             System.out.println("Enter new Email/Username (leave blank to keep current):");
             String newEmailOrUsername = scanner.nextLine();
 
-            lastEditedTime = LocalDateTime.now();
+            LocalDateTime lastEditedTime = LocalDateTime.now();
 
             System.out.println("Do you want to change the password? (1) Yes, (2) No");
             String changePasswordOption = scanner.nextLine();

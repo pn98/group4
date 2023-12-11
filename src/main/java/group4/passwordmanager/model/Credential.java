@@ -11,6 +11,10 @@ public class Credential {
     private boolean isFavorite;
     private LocalDateTime lastAccessed;
     private LocalDateTime lastModified;
+    private String passwordStrength;
+
+
+
 
     public Credential() {
     }
@@ -75,5 +79,12 @@ public class Credential {
 
     public void setLastModified(LocalDateTime lastModified) {
         this.lastModified = lastModified;
+    }
+    public String getPasswordStrength() {
+        return passwordStrength;
+    }
+
+    public void setPasswordStrength(String passwordStrength) {
+        this.passwordStrength = passwordStrength;
     }
 }
