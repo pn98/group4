@@ -15,7 +15,6 @@ public class Credential {
 
 
 
-
     public Credential() {
     }
 

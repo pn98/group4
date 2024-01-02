@@ -5,13 +5,14 @@ import group4.passwordmanager.model.CredentialStorage;
 import group4.passwordmanager.service.CredentialService;
 import group4.passwordmanager.service.PasswordGenerator;
 
-import java.util.List;
-import java.util.Scanner;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Scanner;
 
 public class PasswordManagerApp {
-    private static Scanner scanner;
+    public static Scanner scanner;
     private static LocalDateTime lastViewedTime = null;
 
     public static void main(String[] args) {
@@ -20,7 +21,7 @@ public class PasswordManagerApp {
         CredentialService credentialService = new CredentialService(storage);
 
         while (true) {
-            System.out.println("\nChoose an option: (search, list, create, view, edit, help, exit)");
+            System.out.println("\nChoose an option: (search, list, create, view, edit, group, help, exit)");
             String option = scanner.nextLine();
             String[] parts = option.split(" ");
             String command = parts[0];
@@ -56,6 +57,9 @@ public class PasswordManagerApp {
                         editCredential(scanner, credentialService, index);
                     }
                     break;
+                case "group":
+                    groupCredentials(credentialService);
+                    break;
                 case "help":
                     printHelp();
                     break;
@@ -68,6 +72,75 @@ public class PasswordManagerApp {
         }
     }
 
+
+    private static void listCredentials(CredentialService credentialService) {
+        System.out.println("Choose how to list credentials: (1) By Website ID, (2) By Email/Username");
+        String listOption = scanner.nextLine();
+
+        List<Credential> credentials;
+
+        switch (listOption) {
+            case "1":
+                credentials = credentialService.getAllCredentials();
+                credentials.sort(Comparator.comparing(Credential::getWebsite, String.CASE_INSENSITIVE_ORDER));
+                break;
+            case "2":
+                System.out.println("Enter Email/Username:");
+                String emailOrUsername = scanner.nextLine();
+                credentials = credentialService.getCredentialsByEmail(emailOrUsername);
+                break;
+            default:
+                System.out.println("Invalid option. Listing all credentials by default.");
+                credentials = credentialService.getAllCredentials();
+                break;
+        }
+
+        for (int i = 0; i < credentials.size(); i++) {
+            Credential credential = credentials.get(i);
+            System.out.println((i + 1) + ": Email/Username: " + credential.getEmailOrUsername() +
+                    ", Website: " + credential.getWebsite());
+        }
+    }
+
+
+    private static void groupCredentials(CredentialService credentialService) {
+        System.out.println("Choose how to display credentials: (1) Group by Website, (2) Group by Email/Username");
+        String displayOption = scanner.nextLine();
+
+        List<Credential> credentials = credentialService.getAllCredentials();
+
+        credentials.sort((c1, c2) -> {
+            if ("1".equals(displayOption)) {
+                return c1.getWebsite().compareToIgnoreCase(c2.getWebsite());
+            } else if ("2".equals(displayOption)) {
+                return c1.getEmailOrUsername().compareToIgnoreCase(c2.getEmailOrUsername());
+            }
+            return 0;
+        });
+
+        String currentGroup = null;
+
+        for (int i = 0; i < credentials.size(); i++) {
+            Credential credential = credentials.get(i);
+
+            String groupValue;
+            if ("1".equals(displayOption)) {
+                groupValue = credential.getWebsite();
+            } else {
+                groupValue = credential.getEmailOrUsername();
+            }
+
+            if (!groupValue.equals(currentGroup)) {
+                System.out.println("\nGroup: " + groupValue);
+                currentGroup = groupValue;
+            }
+
+            System.out.println((i + 1) + ": Email/Username: " + credential.getEmailOrUsername() +
+                    ", Website: " + credential.getWebsite());
+        }
+    }
+
+
     private static void printHelp() {
         System.out.println("Available commands:");
         System.out.println("  - search [term]: Search for credentials with the provided term (email or website).");
@@ -78,37 +151,6 @@ public class PasswordManagerApp {
         System.out.println("  - help: Display this help message.");
         System.out.println("  - exit: Exit the Password Manager.");
     }
-
-    private static void listCredentials(CredentialService credentialService) {
-        List<Credential> credentials = credentialService.getAllCredentials();
-
-        credentials.sort((c1, c2) -> {
-            int websiteComparison = c1.getWebsite().compareToIgnoreCase(c2.getWebsite());
-            if (websiteComparison != 0) {
-                return websiteComparison;
-            }
-            return c1.getEmailOrUsername().compareToIgnoreCase(c2.getEmailOrUsername());
-        });
-
-        String currentWebsite = null;
-
-        for (int i = 0; i < credentials.size(); i++) {
-            Credential credential = credentials.get(i);
-            String website = credential.getWebsite();
-
-            if (!website.equals(currentWebsite)) {
-                System.out.println("\nWebsite: " + website);
-                currentWebsite = website;
-            }
-
-            System.out.println((i + 1) + ": Email/Username: " + credential.getEmailOrUsername());
-
-            if (i == credentials.size() - 1 || !credentials.get(i + 1).getWebsite().equals(currentWebsite)) {
-                System.out.println();
-            }
-        }
-    }
-
 
     private static void createCredential(Scanner scanner, CredentialService credentialService) {
         System.out.println("Enter Email or Username:");
@@ -175,12 +217,9 @@ public class PasswordManagerApp {
         System.out.println("Credential added successfully.");
     }
 
-
     private static boolean isWeakPassword(String password) {
         return password.matches("[a-zA-Z]+");
     }
-
-
 
     private static void viewCredential(CredentialService credentialService, int index) {
         index -= 1;
@@ -193,11 +232,9 @@ public class PasswordManagerApp {
 
             lastViewedTime = LocalDateTime.now();
 
-            if (lastViewedTime != null) {
-                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
-                String formattedTimestamp = lastViewedTime.format(formatter);
-                System.out.println("Last viewed: " + formattedTimestamp);
-            }
+            System.out.println("Last viewed: " + PasswordManagerApp.formatTimestamp(lastViewedTime));
+
+            credentialService.updateLastModified(index);
 
             List<Credential> matchingCredentials = credentialService.getCredentialsByEmail(credential.getEmailOrUsername());
 
@@ -266,30 +303,12 @@ public class PasswordManagerApp {
             System.out.println("Enter new Email/Username (leave blank to keep current):");
             String newEmailOrUsername = scanner.nextLine();
 
-            LocalDateTime lastEditedTime = LocalDateTime.now();
-
             System.out.println("Do you want to change the password? (1) Yes, (2) No");
             String changePasswordOption = scanner.nextLine();
 
             String newPassword;
             if ("1".equals(changePasswordOption)) {
-                System.out.println("Choose an option for password: (1) Enter your new password, (2) Generate a new random password");
-                String newPasswordOption = scanner.nextLine();
-
-                if ("1".equals(newPasswordOption)) {
-                    System.out.println("Enter New Password:");
-                    newPassword = scanner.nextLine();
-                } else if ("2".equals(newPasswordOption)) {
-                    newPassword = PasswordGenerator.generateRandomPassword();
-                    System.out.println("Generated Password: " + newPassword);
-                } else {
-                    System.out.println("Invalid option. Keeping the current password.");
-                    newPassword = credential.getPassword();
-                }
-
-                if (!newPassword.equals(credential.getPassword())) {
-                    credential.setLastModified(LocalDateTime.now());
-                }
+                newPassword = changePassword(scanner);
             } else {
                 newPassword = credential.getPassword();
             }
@@ -302,6 +321,29 @@ public class PasswordManagerApp {
         } else {
             System.out.println("Invalid index.");
         }
+    }
+
+    private static String changePassword(Scanner scanner) {
+        System.out.println("Choose an option for password: (1) Enter your new password, (2) Generate a new random password");
+        String newPasswordOption = scanner.nextLine();
+
+        String newPassword;
+        if ("1".equals(newPasswordOption)) {
+            System.out.println("Enter New Password:");
+            newPassword = scanner.nextLine();
+        } else if ("2".equals(newPasswordOption)) {
+            newPassword = PasswordGenerator.generateRandomPassword();
+            System.out.println("Generated Password: " + newPassword);
+        } else {
+            System.out.println("Invalid option. Keeping the current password.");
+            newPassword = "";
+        }
+
+        return newPassword;
+    }
+
+    private static String formatTimestamp(LocalDateTime timestamp) {
+        return timestamp.format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss"));
     }
 
     private static void searchCredentials(Scanner scanner, CredentialService credentialService, String searchTerm) {

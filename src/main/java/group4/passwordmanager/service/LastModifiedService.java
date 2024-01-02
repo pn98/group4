@@ -7,16 +7,33 @@ import java.time.format.DateTimeFormatter;
 
 public class LastModifiedService {
 
-    // Update the last modified timestamp for a credential
     public static void updateLastModified(Credential credential) {
         LocalDateTime currentTimestamp = LocalDateTime.now();
         credential.setLastModified(currentTimestamp);
-        System.out.println("Last modified: " + formatTimestamp(currentTimestamp));
+        printLastModified(currentTimestamp);
     }
 
-    // Format timestamp as a string
-    private static String formatTimestamp(LocalDateTime timestamp) {
+    public static void printLastModified(LocalDateTime timestamp) {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
-        return timestamp.format(formatter);
+        String formattedTimestamp = timestamp.format(formatter);
+        System.out.println("Last modified: " + formattedTimestamp);
+    }
+
+    public static void updateLastViewed() {
+        LocalDateTime currentTimestamp = LocalDateTime.now();
+        CredentialService.setLastViewedTime(currentTimestamp);
+        printLastViewed(currentTimestamp);
+    }
+
+    public static void printLastViewed(LocalDateTime timestamp) {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
+        String formattedTimestamp = timestamp.format(formatter);
+        System.out.println("Last viewed: " + formattedTimestamp);
+    }
+
+    public static String formatTimestamp(LocalDateTime lastViewedTime) {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
+        return lastViewedTime.format(formatter);
     }
 }
+
